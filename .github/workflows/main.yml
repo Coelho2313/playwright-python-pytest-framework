@@ -1,0 +1,32 @@
+﻿name: Playwright Python Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: playwright install --with-deps ${{ matrix.browser }}
+      - name: Run tests (parallel)
+        run: pytest -n auto --browser ${{ matrix.browser }}
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs-${{ matrix.browser }}
+          path: outputs/
+          retention-days: 14
